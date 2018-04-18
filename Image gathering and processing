@@ -1,0 +1,31 @@
+import pandas as pd
+import urllib.request
+import os
+import json
+
+data = pd.read_csv("C:/Users/Vignesh/Desktop/movie_metadata.csv")
+json_data = open("C:/Users/Vignesh/Desktop/imdb_output.json")
+img_data = json.load(json_data)
+pp = pd.read_json("C:/Users/Vignesh/Desktop/imdb_output.json")
+
+image2 = pp[pp.columns[10]]
+def listToStringWithoutBrackets(list1):
+    return str(list1).replace('[',"").replace(']',"").replace("'","")
+
+images = image2
+rot = {}
+for i in range(len(images)):
+    img_url = listToStringWithoutBrackets(images[i])
+    rot[i] =  img_url
+sample = range(4000)
+d1 = {k: rot[k] for k in sample}
+
+filename = []
+for i in range(4000):
+    filename = str(i)
+    fullfilename = os.path.join("C:/Users/Vignesh/Documents/EAB Data Challenge-Vignesh_jothi_selvaraj/images",
+                                filename + ".jpg")
+    try:
+        urllib.request.urlretrieve(d1[i], fullfilename)
+    except urllib.error.HTTPError as e:
+        pass
