@@ -1,0 +1,67 @@
+import pandas as pd
+import numpy as np
+import os
+from skimage.transform import resize
+from skimage import io
+from keras.models import Sequential
+from keras.layers import Dense, Dropout,Flatten
+from keras.layers import Conv2D,MaxPooling2D
+from keras.callbacks import EarlyStopping
+
+
+
+image_dir = "C:/Users/Vignesh/Documents/EAB Data Challenge-Vignesh_jothi_selvaraj/images"
+data = pd.read_csv("C:/Users/Vignesh/Desktop/movie_metadata.csv")
+
+# populate image path
+files = os.listdir(image_dir)
+image_paths = [os.path.join(image_dir, f) for f in files if f.endswith("jpg")]
+
+image_paths = image_paths[:3200]
+img=[]
+title =[]
+for i, path in enumerate(image_paths):
+    new = io.imread(path)
+    tit = path.split("\\")[-1].split(".")[0]
+    img.append(resize(new,(34,34)))
+    title.append(tit)
+
+titles =[]
+for i in range(len(title)):
+    intt = title[i]
+    intt = int(intt)
+    titles.append(intt)
+
+y_train = data["imdb_score"][titles]
+y_train = list(y_train)
+x_train = img
+for items in range(len(x_train)):
+    if x_train[items][1][1].shape != (3,):
+        x_train[items] = x_train[1]
+
+y_train = np.array(y_train)
+x_train = np.array(x_train, np.float16)
+split = 3000
+x_train,y_train,x_test,y_test = x_train[:split],y_train[:split],x_train[split:],y_train[split:]
+early_stopping_monitor = EarlyStopping(patience=2)
+model = Sequential()
+
+model.add(Conv2D(32, kernel_size=(3,3),
+                 activation = 'relu',
+                input_shape= (34,34,3)))
+model.add(Conv2D(64, (3,3),
+                activation = 'relu'))
+model.add(MaxPooling2D(pool_size = (2,2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(128, activation = 'relu'))
+model.add(Dropout(0.5))
+model.add(Dense(1))
+model.compile(optimizer = 'Adam', loss = 'MSE')
+model.fit(x_train,y_train,validation_split=0.3, callbacks=[early_stopping_monitor])
+
+prediction = model.predict(x_test)
+
+print(prediction)
+print(y_test )
+
